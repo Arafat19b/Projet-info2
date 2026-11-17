@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><title>TP3 — UML et modélisation des données (avec Soutenance)</title>
+<style>
+  @page { size: A4; margin: 17mm 18mm 15mm 18mm; }
+  body { font-family: "Liberation Sans", Arial, sans-serif; font-size: 9pt; line-height: 1.3; color: #000; margin: 20px auto; max-width: 800px; }
+  .tete { text-align: center; margin-bottom: 8pt; }
+  .tete .petit, .tete .date, .tete .groupe { font-size: 8.5pt; }
+  .tete h1 { font-size: 14pt; margin: 3pt 0; }
+  h2 { font-size: 10.5pt; margin: 12pt 0 4pt; page-break-after: avoid; }
+  p { margin: 0 0 5pt; text-align: justify; }
+  .note { font-size: 8pt; font-style: italic; color: #333; }
+  figure { margin: 4pt 0 6pt; text-align: center; page-break-inside: avoid; }
+  img { max-width: 100%; }
+  table { width: 100%; border-collapse: collapse; font-size: 8pt; margin: 2pt 0 5pt; }
+  th, td { border: 0.5pt solid #666; padding: 3pt 4pt; vertical-align: top; text-align: left; }
+  th { font-weight: bold; background: #f2f2f2; }
+  pre { font-family: "DejaVu Sans Mono", monospace; font-size: 7.5pt; line-height: 1.25; background: #f7f7f7;
+        border: 0.5pt solid #999; padding: 5pt 7pt; margin: 3pt 0 6pt; white-space: pre; overflow-x: auto; }
+  footer { margin-top: 10pt; font-size: 7.8pt; color: #444; text-align: center; }
+</style></head><body>
+<div class="tete">
+  <div class="petit">Projet informatique 2 — L3 SIL</div>
+  <h1>UML et modélisation des données (avec Soutenance)</h1>
+  <div class="date">TP3 (v2) — 17 novembre 2026</div>
+  <div class="groupe"><strong>Groupe : ALIDOU Arafat – AHOUANTCHEME Danik – DOVONOU Ozias</strong></div>
+</div>
+
+<h2>1. Diagramme de cas d'utilisation (avec Soutenance)</h2>
+<p>Cinq acteurs interagissent avec l'application. Suite à la consigne intégrant la gestion des soutenances (EF-05), le diagramme intègre désormais le cas d'utilisation de programmation de la soutenance par le secrétariat.</p>
+<figure><img src="cas_usage.png" style="width:95mm"></figure>
+<table>
+  <thead><tr><th style="width:36%">Cas d'utilisation</th><th style="width:30%">Acteur principal</th><th style="width:34%">Exigence</th></tr></thead>
+  <tbody>
+    <tr><td>Se connecter</td><td>Tous les acteurs</td><td>EF-01</td></tr>
+    <tr><td>Soumettre une demande de stage</td><td>Étudiant</td><td>EF-02</td></tr>
+    <tr><td>Consulter l'état de ses demandes</td><td>Étudiant</td><td>EF-06</td></tr>
+    <tr><td>Valider ou refuser une demande</td><td>Responsable</td><td>EF-03</td></tr>
+    <tr><td>Affecter un encadreur</td><td>Secrétariat</td><td>EF-04</td></tr>
+    <tr><td>Programmer une soutenance</td><td>Secrétariat</td><td>EF-05</td></tr>
+    <tr><td>Rechercher un dossier</td><td>Secrétariat</td><td>EF-07</td></tr>
+    <tr><td>Consulter ses étudiants affectés</td><td>Encadreur</td><td>EF-05</td></tr>
+    <tr><td>Gérer les comptes et les rôles</td><td>Administrateur</td><td>EF-08</td></tr>
+  </tbody>
+</table>
+
+<h2>2. Diagramme de classes et intégration de la classe Soutenance</h2>
+<p>Suite à l'ajout de la classe Soutenance demandée par la consigne, le modèle relationnel comporte désormais sept tables. La classe Soutenance est reliée à DemandeStage (association 1 — 0..1) pour planifier les soutenances des dossiers validés.</p>
+<figure><img src="classes.png" style="width:135mm"></figure>
+<table>
+  <thead><tr><th style="width:34%">Association et multiplicités</th><th style="width:66%">Traduction dans le schéma relationnel</th></tr></thead>
+  <tbody>
+    <tr><td>Utilisateur 1 — 0..1 Étudiant</td><td>etudiant.utilisateur_id NOT NULL UNIQUE</td></tr>
+    <tr><td>Utilisateur 1 — 0..1 Encadreur</td><td>encadreur.utilisateur_id NOT NULL UNIQUE</td></tr>
+    <tr><td>Étudiant 1 — 0..* DemandeStage</td><td>demande_stage.etudiant_id NOT NULL (FK)</td></tr>
+    <tr><td>Entreprise 1 — 0..* DemandeStage</td><td>demande_stage.entreprise_id NOT NULL (FK)</td></tr>
+    <tr><td>Encadreur 1 — 0..* DemandeStage</td><td>demande_stage.encadreur_id NULL (FK)</td></tr>
+    <tr><td>DemandeStage 1 — 0..1 Soutenance</td><td>soutenance.demande_id NOT NULL UNIQUE (FK)</td></tr>
+    <tr><td>DemandeStage 1 — 0..* Historique</td><td>historique.demande_id NOT NULL (FK, ON DELETE CASCADE)</td></tr>
+    <tr><td>Utilisateur 1 — 0..* Historique</td><td>historique.auteur_id NOT NULL (FK)</td></tr>
+  </tbody>
+</table>
+<p class="note">Règle appliquée : l'association 1 — 0..1 entre DemandeStage et Soutenance se traduit par une clé étrangère dans la table soutenance avec une contrainte UNIQUE, garantissant qu'une demande validée possède au plus une soutenance programmée.</p>
+
+<h2>3. Scénario « Programmer une soutenance »</h2>
+<table>
+  <thead><tr><th style="width:6%">#</th><th style="width:43%">Acteur ou composant</th><th style="width:31%">Échec possible</th><th style="width:20%">Code</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Contrôleur — vérifier la session</td><td>Session absente</td><td>401</td></tr>
+    <tr><td>2</td><td>DemandeRepository::findById</td><td>Demande inexistante</td><td>404</td></tr>
+    <tr><td>3</td><td>SoutenanceService — statut</td><td>Demande non validée (ex: SOUMISE)</td><td>409</td></tr>
+    <tr><td>4</td><td>SoutenanceService — salle/conflit</td><td>Salle déjà occupée au même créneau</td><td>409</td></tr>
+    <tr><td>5</td><td>Repository — INSERT soutenance (transaction)</td><td>Erreur technique</td><td>500 + rollback</td></tr>
+    <tr><td>6</td><td>Contrôleur — réponse</td><td>—</td><td>201 Created</td></tr>
+  </tbody>
+</table>
+
+<h2>4. Schéma relationnel et scripts</h2>
+<p>Trois scripts versionnés reconstruisent la base à l'identique avec la prise en compte de la table <code>soutenance</code> :</p>
+<table>
+  <thead><tr><th style="width:24%">Fichier</th><th style="width:76%">Contenu</th></tr></thead>
+  <tbody>
+    <tr><td>001_schema.sql</td><td>Création des sept tables (dont soutenance), clés primaires, étrangères, UNIQUE et CHECK, et vue v_dossiers_sans_encadreur.</td></tr>
+    <tr><td>002_seed.sql</td><td>Jeu d'essai fictif complet : 8 comptes, 3 étudiants, 2 encadreurs, 2 entreprises, 4 demandes, 1 soutenance programmée, 5 lignes d'historique.</td></tr>
+    <tr><td>003_verification.sql</td><td>Contrôles de chargement : comptages par table (7 tables), répartition par statut, dossiers sans encadreur et liste des soutenances.</td></tr>
+  </tbody>
+</table>
+
+<h2>5. Jeu d'essai et vérification</h2>
+<pre>+---------------+--------+
+| table_        | lignes |
++---------------+--------+
+| utilisateur   |      8 |
+| etudiant      |      3 |
+| encadreur     |      2 |
+| entreprise    |      2 |
+| demande_stage |      4 |
+| soutenance    |      1 |
+| historique    |      5 |
++---------------+--------+
++-----------+----------+
+| statut    | demandes |
++-----------+----------+
+| BROUILLON |        1 |
+| SOUMISE   |        1 |
+| VALIDEE   |        1 |
+| REFUSEE   |        1 |
++-----------+----------+
++-------------------------+
+| dossiers_sans_encadreur |
++-------------------------+
+|                       0 |
++-------------------------+
++----+------------+---------------------+---------+
+| id | demande_id | date_heure          | salle   |
++----+------------+---------------------+---------+
+|  1 |          3 | 2026-11-25 09:00:00 | Amphi B |
++----+------------+---------------------+---------+</pre>
+
+<h2>6. Ce qui reste à faire</h2>
+<p>Le modèle est mis à jour pour intégrer la soutenance (v2) ; restent à coder les services associés et les tests unitaires correspondants. Les sources PlantUML et scripts SQL sont intégralement versionnés.</p>
+
+<footer>Projet informatique 2 — L3 SIL — UML et modélisation des données avec Soutenance (TP3 v2) — 17/11/2026 — Groupe ALIDOU / AHOUANTCHEME / DOVONOU</footer>
+</body></html>
