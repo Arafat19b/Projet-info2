@@ -1,0 +1,514 @@
+
+/* =========================================
+   DESIGN SYSTEM - INTERFACE DE GESTION
+   Sobre, moderne, responsive et accessible
+========================================= */
+
+:root {
+  /* Couleurs principales */
+  --bleu: #1b365d;
+  --bleu-clair: #2b547e;
+  --bleu-fond: #eff6ff;
+
+  --vert: #166534;
+  --vert-clair: #15803d;
+  --vert-fond: #dcfce7;
+
+  --rouge: #991b1b;
+  --rouge-fond: #fee2e2;
+
+  --ambre: #92400e;
+  --ambre-fond: #fef3c7;
+
+  /* Couleurs neutres */
+  --fond: #f4f6f9;
+  --carte: #ffffff;
+  --bordure: #cbd5e1;
+  --texte: #1e293b;
+  --gris: #475569;
+
+  /* Ombres et dimensions */
+  --ombre: 0 2px 8px rgba(15, 23, 42, 0.06);
+  --ombre-hover: 0 8px 20px rgba(15, 23, 42, 0.10);
+
+  --rayon: 10px;
+  --transition: 0.25s ease;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--fond);
+  color: var(--texte);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* =========================================
+   CONTENEUR
+========================================= */
+
+.conteneur {
+  width: min(100% - 2rem, 1000px);
+  margin: 0 auto;
+}
+
+/* =========================================
+   EN-TÊTE
+========================================= */
+
+.entete {
+  background: linear-gradient(120deg, var(--vert), #14532d);
+  color: #ffffff;
+  padding: 1.5rem 0;
+  margin-bottom: 2rem;
+  box-shadow: var(--ombre);
+}
+
+.entete h1 {
+  margin: 0;
+  font-size: clamp(1.3rem, 3vw, 1.8rem);
+  font-weight: 750;
+  letter-spacing: -0.5px;
+}
+
+.sous-titre {
+  margin: 0.3rem 0 0;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.entete-contenu {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.barre-utilisateur {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.badge-user {
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* =========================================
+   CARTES
+========================================= */
+
+.carte {
+  background: var(--carte);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  padding: clamp(1rem, 3vw, 1.75rem);
+  margin-bottom: 1.5rem;
+  box-shadow: var(--ombre);
+  transition: box-shadow var(--transition),
+              transform var(--transition);
+}
+
+.carte:hover {
+  box-shadow: var(--ombre-hover);
+}
+
+.carte h2,
+.carte h3 {
+  margin-top: 0;
+  color: var(--bleu);
+  line-height: 1.3;
+}
+
+.carte h2 {
+  font-size: 1.3rem;
+}
+
+.carte h3 {
+  font-size: 1.1rem;
+}
+
+.entete-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.entete-section h2 {
+  margin: 0;
+}
+
+/* =========================================
+   FORMULAIRES
+========================================= */
+
+.champ {
+  margin-bottom: 1.2rem;
+}
+
+.champ label {
+  display: block;
+  font-weight: 650;
+  margin-bottom: 0.45rem;
+  font-size: 0.95rem;
+}
+
+.champ-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.champ-inline label {
+  margin-bottom: 0;
+  font-weight: 400;
+}
+
+input[type="email"],
+input[type="password"],
+select,
+textarea {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--bordure);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--texte);
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color var(--transition),
+              box-shadow var(--transition);
+}
+
+textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #64748b;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--bleu-clair);
+  box-shadow: 0 0 0 3px rgba(43, 84, 126, 0.18);
+}
+
+/* Focus clavier */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
+}
+
+.erreur-champ {
+  color: var(--rouge);
+  font-size: 0.875rem;
+  margin: 0.35rem 0 0;
+  min-height: 1.2em;
+}
+
+/* =========================================
+   ALERTES
+========================================= */
+
+.alerte {
+  padding: 0.9rem 1.1rem;
+  border-radius: 8px;
+  margin-bottom: 1.2rem;
+  font-weight: 550;
+  border: 1px solid transparent;
+  animation: apparition 0.3s ease;
+}
+
+.alerte-erreur {
+  background: var(--rouge-fond);
+  color: var(--rouge);
+  border-color: #fca5a5;
+}
+
+.alerte-succes {
+  background: var(--vert-fond);
+  color: var(--vert);
+  border-color: #86efac;
+}
+
+/* =========================================
+   BOUTONS
+========================================= */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1.1rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 0.95rem;
+  font-weight: 650;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background var(--transition),
+              transform var(--transition),
+              box-shadow var(--transition);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ombre);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-primaire {
+  background: var(--bleu);
+  color: #ffffff;
+}
+
+.btn-primaire:hover {
+  background: var(--bleu-clair);
+}
+
+.btn-secondaire {
+  background: #e2e8f0;
+  color: var(--texte);
+}
+
+.btn-secondaire:hover {
+  background: #cbd5e1;
+}
+
+.btn-succes {
+  background: var(--vert);
+  color: #ffffff;
+}
+
+.btn-succes:hover {
+  background: var(--vert-clair);
+}
+
+.btn-danger {
+  background: var(--rouge);
+  color: #ffffff;
+}
+
+.btn-danger:hover {
+  background: #7f1d1d;
+}
+
+/* =========================================
+   LISTE DES DOSSIERS
+========================================= */
+
+.liste-dossiers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.dossier-item {
+  background: #ffffff;
+  border: 1px solid var(--bordure);
+  border-radius: 9px;
+  padding: 1.15rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+  transition: border-color var(--transition),
+              box-shadow var(--transition);
+}
+
+.dossier-item:hover {
+  border-color: #94a3b8;
+  box-shadow: var(--ombre);
+}
+
+.dossier-infos {
+  flex: 1;
+  min-width: 200px;
+}
+
+.dossier-infos p {
+  margin: 0.3rem 0;
+}
+
+/* =========================================
+   BADGES DE STATUT
+========================================= */
+
+.statut-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 750;
+  letter-spacing: 0.2px;
+}
+
+.statut-BROUILLON {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.statut-SOUMISE {
+  background: var(--ambre-fond);
+  color: var(--ambre);
+}
+
+.statut-VALIDEE {
+  background: var(--vert-fond);
+  color: var(--vert);
+}
+
+.statut-REFUSEE {
+  background: var(--rouge-fond);
+  color: var(--rouge);
+}
+
+/* =========================================
+   ACTIONS
+========================================= */
+
+.actions-ligne {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.panneau-refus {
+  border-left: 4px solid var(--rouge);
+  background: #fffafa;
+}
+
+/* =========================================
+   COMPTES DE DÉMONSTRATION
+========================================= */
+
+.comptes-demo {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--bordure);
+  font-size: 0.9rem;
+  color: var(--gris);
+}
+
+/* =========================================
+   ANIMATIONS
+========================================= */
+
+@keyframes apparition {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================================
+   RESPONSIVE - TABLETTES
+========================================= */
+
+@media (max-width: 768px) {
+  .entete {
+    padding: 1.2rem 0;
+  }
+
+  .entete-contenu {
+    align-items: flex-start;
+  }
+
+  .carte {
+    padding: 1.2rem;
+  }
+}
+
+/* =========================================
+   RESPONSIVE - MOBILES
+========================================= */
+
+@media (max-width: 480px) {
+  .conteneur {
+    width: min(100% - 1.25rem, 1000px);
+  }
+
+  .entete-contenu {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .carte {
+    padding: 1rem;
+  }
+
+  .entete-section {
+    align-items: flex-start;
+  }
+
+  .dossier-item {
+    flex-direction: column;
+  }
+
+  .actions-ligne {
+    width: 100%;
+  }
+
+  .actions-ligne .btn {
+    flex: 1;
+  }
+
+  .btn {
+    padding: 0.65rem 0.85rem;
+  }
+}
+
+/* =========================================
+   ACCESSIBILITÉ - ANIMATIONS RÉDUITES
+========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

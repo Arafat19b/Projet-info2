@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gestion des stages — TP7 Interface & Intégration</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="entete">
+    <div class="conteneur entete-contenu">
+      <div>
+        <h1>Gestion des stages universitaires</h1>
+        <p class="sous-titre">L3 SIL · Interface Web accessible &amp; intégration API</p>
+      </div>
+      <div id="barre-utilisateur" class="barre-utilisateur" hidden>
+        <span id="info-utilisateur" class="badge-user"></span>
+        <button type="button" id="btn-deconnexion" class="btn btn-secondaire">Déconnexion</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="conteneur">
+    <!-- Zone de notification globale (accessible via role="alert") -->
+    <div id="alerte-globale" class="alerte" role="alert" aria-live="polite" hidden></div>
+
+    <!-- ÉCRAN 1 : CONNEXION -->
+    <section id="vue-connexion" class="carte">
+      <h2>Connexion à l'espace stages</h2>
+      <p class="aide">Connectez-vous en tant qu'étudiant ou responsable pédagogique pour gérer les demandes.</p>
+
+      <form id="form-connexion" novalidate>
+        <div class="champ">
+          <label for="email">Adresse email universitaire</label>
+          <input type="email" id="email" name="email" autocomplete="username" required placeholder="ex. danik.ahouantcheme@univ.test">
+          <p id="erreur-email" class="erreur-champ" role="alert"></p>
+        </div>
+
+        <div class="champ">
+          <label for="motDePasse">Mot de passe</label>
+          <input type="password" id="motDePasse" name="motDePasse" autocomplete="current-password" required placeholder="••••••••">
+          <p id="erreur-motDePasse" class="erreur-champ" role="alert"></p>
+        </div>
+
+        <button type="submit" class="btn btn-primaire">Se connecter</button>
+      </form>
+
+      <details class="comptes-demo">
+        <summary>Comptes fictifs de démonstration (mot de passe : <code>Demo1234!</code>)</summary>
+        <ul>
+          <li><strong>Étudiant :</strong> <code>danik.ahouantcheme@univ.test</code> (ou <code>arafat.alidou@univ.test</code>)</li>
+          <li><strong>Responsable :</strong> <code>resp.pedago@univ.test</code></li>
+          <li><strong>Secrétariat :</strong> <code>secretariat@univ.test</code></li>
+        </ul>
+      </details>
+    </section>
+
+    <!-- ÉCRAN 2 : PARCOURS ÉTUDIANT -->
+    <section id="vue-etudiant" hidden>
+      <div class="carte">
+        <h2>Déposer une demande de stage</h2>
+        <form id="form-demande" novalidate>
+          <div class="champ">
+            <label for="entrepriseId">Entreprise d'accueil</label>
+            <select id="entrepriseId" name="entrepriseId" required>
+              <option value="">-- Choisir une entreprise --</option>
+            </select>
+            <p id="erreur-entrepriseId" class="erreur-champ" role="alert"></p>
+          </div>
+
+          <div class="champ champ-inline">
+            <input type="checkbox" id="soumettre-directement" name="soumettre" checked>
+            <label for="soumettre-directement">Soumettre directement au responsable pédagogique (sinon enregistrer en brouillon)</label>
+          </div>
+
+          <button type="submit" class="btn btn-primaire">Enregistrer la demande</button>
+        </form>
+      </div>
+
+      <div class="carte">
+        <div class="entete-section">
+          <h2>Mes demandes de stage</h2>
+          <button type="button" id="btn-rafraichir-etudiant" class="btn btn-secondaire">Actualiser</button>
+        </div>
+        <div id="liste-demandes-etudiant" class="liste-dossiers"></div>
+      </div>
+    </section>
+
+    <!-- ÉCRAN 3 : PARCOURS RESPONSABLE / SECRÉTARIAT -->
+    <section id="vue-responsable" hidden>
+      <div class="carte">
+        <div class="entete-section">
+          <h2>Dossiers de stage à examiner</h2>
+          <button type="button" id="btn-rafraichir-responsable" class="btn btn-secondaire">Actualiser</button>
+        </div>
+        <div id="liste-demandes-responsable" class="liste-dossiers"></div>
+      </div>
+
+      <!-- Modale / panneau de refus motivé accessible -->
+      <div id="panneau-refus" class="carte panneau-refus" hidden>
+        <h3 id="titre-panneau-refus">Refuser la demande</h3>
+        <form id="form-refus" novalidate>
+          <input type="hidden" id="refus-demande-id">
+          <div class="champ">
+            <label for="motif">Motif du refus (obligatoire)</label>
+            <textarea id="motif" name="motif" rows="3" required placeholder="Indiquez les pièces manquantes ou corrections attendues..."></textarea>
+            <p id="erreur-motif" class="erreur-champ" role="alert"></p>
+          </div>
+          <div class="actions-ligne">
+            <button type="submit" class="btn btn-danger">Confirmer le refus</button>
+            <button type="button" id="btn-annuler-refus" class="btn btn-secondaire">Annuler</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
