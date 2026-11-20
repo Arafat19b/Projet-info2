@@ -1,0 +1,761 @@
+diff -ruN -x .env -x tp8-tests-securite -x correctifs.patch a/README.md b/README.md
+--- a/README.md	2026-11-18 22:22:54.000000000 +0100
++++ b/README.md	2026-11-19 20:21:51.410438672 +0100
+@@ -1,3 +1,11 @@
+ # TP8 — Module d'encadrement et de soutenances (L3 SIL)
+ 
+ Extension complète de l'application de gestion de stages intégrant la gestion des encadreurs, l'affectation aux dossiers validés, la programmation des soutenances et la notation.
++
++## Tests et sécurité (TP8)
++
++- Documents : `docs/tp8-tests-securite/` (matrice de tests, preuves, fiche de revue de code).
++- Banc de test HTTP : `php tests/securite_http.php http://localhost:8000` (réimporter `001_schema.sql` et `002_seed.sql` avant chaque exécution).
++- Test de service : `php tests/api_demandes.php`.
++- Route ajoutée : `GET /api/demandes/{id}` (un étudiant ne lit que ses dossiers, un encadreur que ceux qu'il encadre).
++- Protection CSRF : cookie `SameSite=Lax` et refus (403) des requêtes modifiantes dont l'en-tête `Origin` n'est pas celui du site.
+diff -ruN -x .env -x tp8-tests-securite -x correctifs.patch a/migrations/002_seed.sql b/migrations/002_seed.sql
+--- a/migrations/002_seed.sql	2026-11-18 22:22:54.000000000 +0100
++++ b/migrations/002_seed.sql	2026-11-19 20:16:19.134999612 +0100
+@@ -3,19 +3,19 @@
+ -- 002_seed.sql — jeu d'essai fictif incluant les soutenances
+ -- Attendu : 8 comptes, 3 étudiants, 2 encadreurs, 2 entreprises,
+ --           4 demandes, 1 soutenance programmée, 5 lignes d'historique.
+--- Mot de passe commun des comptes de démonstration : Demo1234!
++-- Mot de passe commun des comptes de démonstration : Demo1234! (chaque compte a son propre hash, donc son propre sel)
+ 
+ SET NAMES utf8mb4;
+ 
+ INSERT INTO utilisateur (id, email, mot_de_passe_hash, role, nom, prenom, actif) VALUES
+-  (1, 'arafat.alidou@univ.test',      '$2y$10$w8vj0PJ5HJkVug46z0gCgeQbKFAUvmEMRLbgCLqNUQ5VDvoiPCIXm', 'ETUDIANT',    'ALIDOU',       'Arafat', 1),
+-  (2, 'danik.ahouantcheme@univ.test', '$2y$10$w8vj0PJ5HJkVug46z0gCgeQbKFAUvmEMRLbgCLqNUQ5VDvoiPCIXm', 'ETUDIANT',    'AHOUANTCHEME', 'Danik',  1),
+-  (3, 'ozias.dovonou@univ.test',      '$2y$10$w8vj0PJ5HJkVug46z0gCgeQbKFAUvmEMRLbgCLqNUQ5VDvoiPCIXm', 'ETUDIANT',    'DOVONOU',      'Ozias',  1),
+-  (4, 'secretariat@univ.test',        '$2y$10$w8vj0PJ5HJkVug46z0gCgeQbKFAUvmEMRLbgCLqNUQ5VDvoiPCIXm', 'SECRETARIAT', 'AGOSSOU',      'Rita',   1),
+-  (5, 'resp.pedago@univ.test',        '$2y$10$w8vj0PJ5HJkVug46z0gCgeQbKFAUvmEMRLbgCLqNUQ5VDvoiPCIXm', 'RESPONSABLE', 'TOSSOU',       'Bertin', 1),
+-  (6, 'lea.hounkpati@univ.test',      '$2y$10$w8vj0PJ5HJkVug46z0gCgeQbKFAUvmEMRLbgCLqNUQ5VDvoiPCIXm', 'ENCADREUR',   'HOUNKPATI',    'Léa',    1),
+-  (7, 'paul.sossou@univ.test',        '$2y$10$w8vj0PJ5HJkVug46z0gCgeQbKFAUvmEMRLbgCLqNUQ5VDvoiPCIXm', 'ENCADREUR',   'SOSSOU',       'Paul',   1),
+-  (8, 'admin@univ.test',              '$2y$10$w8vj0PJ5HJkVug46z0gCgeQbKFAUvmEMRLbgCLqNUQ5VDvoiPCIXm', 'ADMIN',       'GBAGUIDI',     'Noël',   1);
++  (1, 'arafat.alidou@univ.test',      '$2y$10$a/k1DdfSixn19w1w/NUHG.7c/48bRtPhBxjBLvq0CJhakrT3ORXgK', 'ETUDIANT',    'ALIDOU',       'Arafat', 1),
++  (2, 'danik.ahouantcheme@univ.test', '$2y$10$xXFFf65O5uPUd8v498WIyOO20HLkeH2TfSDW/IO2v97wVO3WaqpWq', 'ETUDIANT',    'AHOUANTCHEME', 'Danik',  1),
++  (3, 'ozias.dovonou@univ.test',      '$2y$10$pInU5W/oaEVuJslHh7f18OU1VZNv0PLuKHEJCrbe8Fm9eThQULo76', 'ETUDIANT',    'DOVONOU',      'Ozias',  1),
++  (4, 'secretariat@univ.test',        '$2y$10$JHtWnizNalWpkwC3pRy5LO2LT2zrKpwJ.QxU42Vk5p.AIQKAXOTpS', 'SECRETARIAT', 'AGOSSOU',      'Rita',   1),
++  (5, 'resp.pedago@univ.test',        '$2y$10$j6ySdr5uF.q2cmAiuJexOuHqyYr7jV2nOPtciRXfZza1.tSXwsbfO', 'RESPONSABLE', 'TOSSOU',       'Bertin', 1),
++  (6, 'lea.hounkpati@univ.test',      '$2y$10$nfTzfbinGYbl2UXHeS9CPeAmhpmQVJDRG4sVau9kb7FnH5lyIpziu', 'ENCADREUR',   'HOUNKPATI',    'Léa',    1),
++  (7, 'paul.sossou@univ.test',        '$2y$10$O5.2P6WB8jbHcDZ1hDhki.9H4gjGJXfK2zuixLdOC4EtgJuTHGoY6', 'ENCADREUR',   'SOSSOU',       'Paul',   1),
++  (8, 'admin@univ.test',              '$2y$10$msP5lyloGhZg.aOIr6V6X.b4B.8tkck4qfacQ6bMHUJiHd6xVoYpS', 'ADMIN',       'GBAGUIDI',     'Noël',   1);
+ 
+ INSERT INTO etudiant (id, utilisateur_id, numero_etudiant, filiere) VALUES
+   (1, 1, 'ETU-2026-001', 'SIL'),
+diff -ruN -x .env -x tp8-tests-securite -x correctifs.patch a/public/index.php b/public/index.php
+--- a/public/index.php	2026-11-18 22:22:54.000000000 +0100
++++ b/public/index.php	2026-11-19 20:16:18.492952896 +0100
+@@ -28,6 +28,20 @@
+ $methode = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+ $creerPdo = static fn(): PDO => Database::connecter($config['db']);
+ 
++// Protection CSRF (en plus du cookie SameSite=Lax) : une requête qui modifie des données
++// doit venir de notre propre origine. Les clients sans en-tête Origin (curl, Postman) passent.
++if (in_array($methode, ['POST', 'PUT', 'PATCH', 'DELETE'], true) && str_starts_with($chemin, '/api/')) {
++    $origine = $_SERVER['HTTP_ORIGIN'] ?? null;
++    if ($origine !== null) {
++        $p = parse_url($origine);
++        $hoteOrigine = ($p['host'] ?? '') . (isset($p['port']) ? ':' . $p['port'] : '');
++        if (strcasecmp($hoteOrigine, (string) ($_SERVER['HTTP_HOST'] ?? '')) !== 0) {
++            SanteController::json(403, ['message' => 'Origine non autorisée.']);
++            return;
++        }
++    }
++}
++
+ $sante = new SanteController(static fn(): SanteService => new SanteService(new SanteRepository($creerPdo())));
+ $auth = new AuthController(static fn(): AuthService => new AuthService(new UtilisateurRepository($creerPdo())));
+ $demandes = new DemandeController(static function () use ($creerPdo): DemandeService {
+@@ -51,6 +65,8 @@
+     $demandes->lister();
+ } elseif ($chemin === '/api/demandes' && $methode === 'POST') {
+     $demandes->creer();
++} elseif (preg_match('#^/api/demandes/(\d+)$#', $chemin, $m) && $methode === 'GET') {
++    $demandes->lire((int) $m[1]);
+ } elseif (preg_match('#^/api/demandes/(\d+)/statut$#', $chemin, $m) && $methode === 'PATCH') {
+     $demandes->changerStatut((int) $m[1]);
+ } elseif (preg_match('#^/api/demandes/(\d+)/encadreur$#', $chemin, $m) && $methode === 'PATCH') {
+diff -ruN -x .env -x tp8-tests-securite -x correctifs.patch a/src/Controllers/DemandeController.php b/src/Controllers/DemandeController.php
+--- a/src/Controllers/DemandeController.php	2026-11-18 22:22:54.000000000 +0100
++++ b/src/Controllers/DemandeController.php	2026-11-19 20:16:18.492742800 +0100
+@@ -53,6 +53,23 @@
+         }
+     }
+ 
++    public function lire(int $id): void
++    {
++        $utilisateur = $this->exigerConnexion();
++        if (!$utilisateur) {
++            return;
++        }
++
++        try {
++            SanteController::json(200, ($this->fabrique)()->lireDemande($id, $utilisateur));
++        } catch (RuntimeException $e) {
++            $code = in_array($e->getCode(), [400, 403, 404, 409], true) ? $e->getCode() : 500;
++            SanteController::json($code, ['message' => $e->getMessage()]);
++        } catch (\Throwable $e) {
++            SanteController::json(500, ['message' => 'Erreur interne.']);
++        }
++    }
++
+     public function creer(): void
+     {
+         $utilisateur = $this->exigerConnexion();
+diff -ruN -x .env -x tp8-tests-securite -x correctifs.patch a/src/Repositories/DemandeRepository.php b/src/Repositories/DemandeRepository.php
+--- a/src/Repositories/DemandeRepository.php	2026-11-18 22:22:54.000000000 +0100
++++ b/src/Repositories/DemandeRepository.php	2026-11-19 20:17:54.533472932 +0100
+@@ -82,6 +82,37 @@
+         return $stmt->fetchAll();
+     }
+ 
++    /** Un dossier avec les libellés (étudiant, entreprise, encadreur, soutenance). */
++    public function findDetailById(int $id): ?array
++    {
++        $stmt = $this->pdo->prepare(
++            'SELECT d.id, d.etudiant_id, d.entreprise_id, d.encadreur_id, d.statut, d.motif_refus,
++                    d.date_depot, d.date_decision,
++                    u.nom AS etudiant_nom, u.prenom AS etudiant_prenom,
++                    ent.nom AS entreprise_nom, ent.ville AS entreprise_ville,
++                    en_u.nom AS encadreur_nom, en_u.prenom AS encadreur_prenom,
++                    s.id AS soutenance_id, s.date_heure AS soutenance_date, s.salle AS soutenance_salle, s.note AS soutenance_note
++             FROM demande_stage d
++             JOIN etudiant e ON e.id = d.etudiant_id
++             JOIN utilisateur u ON u.id = e.utilisateur_id
++             JOIN entreprise ent ON ent.id = d.entreprise_id
++             LEFT JOIN encadreur en ON en.id = d.encadreur_id
++             LEFT JOIN utilisateur en_u ON en_u.id = en.utilisateur_id
++             LEFT JOIN soutenance s ON s.demande_id = d.id
++             WHERE d.id = :id'
++        );
++        $stmt->execute(['id' => $id]);
++        $ligne = $stmt->fetch();
++        return $ligne ?: null;
++    }
++
++    public function soutenanceExiste(int $demandeId): bool
++    {
++        $stmt = $this->pdo->prepare('SELECT 1 FROM soutenance WHERE demande_id = :id');
++        $stmt->execute(['id' => $demandeId]);
++        return (bool) $stmt->fetchColumn();
++    }
++
+     public function listerEntreprises(): array
+     {
+         $stmt = $this->pdo->query('SELECT id, nom, ville FROM entreprise ORDER BY nom ASC');
+@@ -169,7 +200,7 @@
+                 'date_heure' => $dateHeure,
+                 'salle' => $salle,
+             ]);
+-            return (int) ($this->pdo->lastInsertId() ?: 1);
++            return $this->idSoutenance($demandeId);
+         } catch (\Throwable) {
+             // Fallback for strict SQLite without ON DUPLICATE KEY
+             $stmtUp = $this->pdo->prepare('UPDATE soutenance SET date_heure = :dh, salle = :s WHERE demande_id = :did');
+@@ -177,12 +208,19 @@
+             if ($stmtUp->rowCount() === 0) {
+                 $stmtIns = $this->pdo->prepare('INSERT INTO soutenance (demande_id, date_heure, salle) VALUES (:did, :dh, :s)');
+                 $stmtIns->execute(['did' => $demandeId, 'dh' => $dateHeure, 's' => $salle]);
+-                return (int) $this->pdo->lastInsertId();
+             }
+-            return 1;
++            return $this->idSoutenance($demandeId);
+         }
+     }
+ 
++    /** Identifiant réel de la soutenance d'un dossier (lastInsertId() vaut 0 lors d'une modification). */
++    private function idSoutenance(int $demandeId): int
++    {
++        $stmt = $this->pdo->prepare('SELECT id FROM soutenance WHERE demande_id = :id');
++        $stmt->execute(['id' => $demandeId]);
++        return (int) $stmt->fetchColumn();
++    }
++
+     public function noterSoutenance(int $demandeId, float $note): bool
+     {
+         $stmt = $this->pdo->prepare('UPDATE soutenance SET note = :note WHERE demande_id = :demande_id');
+diff -ruN -x .env -x tp8-tests-securite -x correctifs.patch a/src/Services/DemandeService.php b/src/Services/DemandeService.php
+--- a/src/Services/DemandeService.php	2026-11-18 22:22:54.000000000 +0100
++++ b/src/Services/DemandeService.php	2026-11-19 20:16:18.492658699 +0100
+@@ -52,6 +52,30 @@
+         throw new RuntimeException('Accès interdit.', 403);
+     }
+ 
++    /** Lecture d'un dossier : un étudiant ne lit que le sien, un encadreur que ceux qu'il encadre. */
++    public function lireDemande(int $id, array $utilisateur): array
++    {
++        $demande = $this->demandes->findDetailById($id);
++        if (!$demande) {
++            throw new RuntimeException('Demande introuvable.', 404);
++        }
++
++        $role = $utilisateur['role'] ?? '';
++        $autorise = false;
++        if (in_array($role, ['RESPONSABLE', 'SECRETARIAT', 'ADMIN'], true)) {
++            $autorise = true;
++        } elseif ($role === 'ETUDIANT') {
++            $autorise = (int) ($utilisateur['etudiant_id'] ?? 0) === (int) $demande['etudiant_id'];
++        } elseif ($role === 'ENCADREUR') {
++            $autorise = !empty($demande['encadreur_id'])
++                && (int) ($utilisateur['encadreur_id'] ?? 0) === (int) $demande['encadreur_id'];
++        }
++        if (!$autorise) {
++            throw new RuntimeException('Accès interdit sur ce dossier.', 403);
++        }
++        return $demande;
++    }
++
+     public function creerDemande(array $utilisateur, mixed $entrepriseId, bool $soumettreDirectement = false): array
+     {
+         if (($utilisateur['role'] ?? '') !== 'ETUDIANT' || empty($utilisateur['etudiant_id'])) {
+@@ -162,6 +186,10 @@
+             throw new RuntimeException('Impossible d\'assigner un encadreur sur un stage non validé.', 400);
+         }
+ 
++        // Un identifiant est un entier : « 2 OR 1=1 » est refusé au lieu d'être tronqué en 2.
++        if (!is_int($encadreurId) && !(is_string($encadreurId) && ctype_digit($encadreurId))) {
++            throw new RuntimeException('Identifiant d\'encadreur invalide.', 400);
++        }
+         $encId = (int) $encadreurId;
+         if ($encId <= 0 || !$this->demandes->encadreurExiste($encId)) {
+             throw new RuntimeException('Encadreur inexistant.', 400);
+@@ -192,11 +220,17 @@
+             throw new RuntimeException('La soutenance requiert un stage validé.', 400);
+         }
+ 
+-        $dh = trim($dateHeure);
+         $sl = trim($salle);
+-        if ($dh === '' || $sl === '') {
++        if (trim($dateHeure) === '' || $sl === '') {
+             throw new RuntimeException('Date/heure et salle obligatoires.', 400);
+         }
++        $dh = self::normaliserDateHeure($dateHeure);
++        if ($dh === null) {
++            throw new RuntimeException('Date/heure invalide (format attendu : AAAA-MM-JJ HH:MM).', 400);
++        }
++        if (mb_strlen($sl) > 50) {
++            throw new RuntimeException('Salle trop longue (50 caractères maximum).', 400);
++        }
+ 
+         try {
+             $soutenanceId = $this->demandes->programmerSoutenance($id, $dh, $sl);
+@@ -207,6 +241,22 @@
+         }
+     }
+ 
++    /**
++     * Accepte AAAA-MM-JJ HH:MM[:SS] (avec espace ou « T ») et refuse les dates inexistantes
++     * (31 février, 25 h 99) en comparant avec le texte d'origine. Renvoie le format SQL ou null.
++     */
++    private static function normaliserDateHeure(string $valeur): ?string
++    {
++        $valeur = trim($valeur);
++        foreach (['Y-m-d H:i:s', 'Y-m-d H:i', 'Y-m-d\TH:i:s', 'Y-m-d\TH:i'] as $format) {
++            $date = \DateTimeImmutable::createFromFormat($format, $valeur);
++            if ($date !== false && $date->format($format) === $valeur) {
++                return $date->format('Y-m-d H:i:s');
++            }
++        }
++        return null;
++    }
++
+     public function noterSoutenance(int $id, mixed $note, array $utilisateur): array
+     {
+         $role = $utilisateur['role'] ?? '';
+@@ -223,6 +273,10 @@
+             throw new RuntimeException('Cet encadreur n\'est pas affecté à ce stage.', 403);
+         }
+ 
++        if (!$this->demandes->soutenanceExiste($id)) {
++            throw new RuntimeException('Aucune soutenance programmée pour ce dossier.', 404);
++        }
++
+         if (!is_numeric($note)) {
+             throw new RuntimeException('Note invalide.', 400);
+         }
+diff -ruN -x .env -x tp8-tests-securite -x correctifs.patch a/tests/api_demandes.php b/tests/api_demandes.php
+--- a/tests/api_demandes.php	1970-01-01 01:00:00.000000000 +0100
++++ b/tests/api_demandes.php	2026-11-19 20:16:19.135207152 +0100
+@@ -0,0 +1,164 @@
++<?php
++declare(strict_types=1);
++
++// Tests complets de l'API TP6 (transitions, authentification, transaction/rollback, 6 codes HTTP)
++// Exécution : php tests/api_demandes.php
++require __DIR__ . '/../src/autoload.php';
++
++use App\Repositories\DemandeRepository;
++use App\Repositories\UtilisateurRepository;
++use App\Services\AuthService;
++use App\Services\DemandeService;
++
++$echecs = 0;
++function verifier(string $nom, bool $condition): void
++{
++    global $echecs;
++    echo ($condition ? '[OK]   ' : '[ECHEC]') . " $nom\n";
++    if (!$condition) {
++        $echecs++;
++    }
++}
++
++$pdo = new PDO('sqlite::memory:', null, null, [
++    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
++    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
++]);
++
++$pdo->exec("
++    CREATE TABLE utilisateur (
++        id INTEGER PRIMARY KEY AUTOINCREMENT,
++        email TEXT NOT NULL UNIQUE,
++        mot_de_passe_hash TEXT NOT NULL,
++        role TEXT NOT NULL,
++        nom TEXT NOT NULL,
++        prenom TEXT NOT NULL,
++        actif INTEGER NOT NULL DEFAULT 1
++    );
++    CREATE TABLE etudiant (
++        id INTEGER PRIMARY KEY AUTOINCREMENT,
++        utilisateur_id INTEGER NOT NULL UNIQUE,
++        numero_etudiant TEXT NOT NULL,
++        filiere TEXT NOT NULL
++    );
++    CREATE TABLE encadreur (
++        id INTEGER PRIMARY KEY AUTOINCREMENT,
++        utilisateur_id INTEGER NOT NULL UNIQUE,
++        grade TEXT NOT NULL
++    );
++    CREATE TABLE entreprise (
++        id INTEGER PRIMARY KEY AUTOINCREMENT,
++        nom TEXT NOT NULL,
++        ville TEXT NOT NULL
++    );
++    CREATE TABLE demande_stage (
++        id INTEGER PRIMARY KEY AUTOINCREMENT,
++        etudiant_id INTEGER NOT NULL,
++        entreprise_id INTEGER NOT NULL,
++        encadreur_id INTEGER NULL,
++        statut TEXT NOT NULL DEFAULT 'BROUILLON',
++        motif_refus TEXT NULL,
++        date_depot DATETIME NULL,
++        date_decision DATETIME NULL
++    );
++    CREATE TABLE historique (
++        id INTEGER PRIMARY KEY AUTOINCREMENT,
++        demande_id INTEGER NOT NULL,
++        ancien_statut TEXT NULL,
++        nouveau_statut TEXT NOT NULL,
++        auteur_id INTEGER NOT NULL,
++        motif TEXT NULL,
++        date_evenement DATETIME DEFAULT CURRENT_TIMESTAMP
++    );
++");
++
++$hash = password_hash('Demo1234!', PASSWORD_DEFAULT);
++$pdo->prepare("INSERT INTO utilisateur (id, email, mot_de_passe_hash, role, nom, prenom) VALUES (1, 'danik@univ.test', ?, 'ETUDIANT', 'AHOUANTCHEME', 'Danik')")->execute([$hash]);
++$pdo->prepare("INSERT INTO utilisateur (id, email, mot_de_passe_hash, role, nom, prenom) VALUES (2, 'resp@univ.test', ?, 'RESPONSABLE', 'TOSSOU', 'Bertin')")->execute([$hash]);
++$pdo->exec("INSERT INTO etudiant (id, utilisateur_id, numero_etudiant, filiere) VALUES (1, 1, 'ETU-2026-002', 'SIL')");
++$pdo->exec("INSERT INTO entreprise (id, nom, ville) VALUES (1, 'Atelier Numerique', 'Porto-Novo')");
++
++$userRepo = new UtilisateurRepository($pdo);
++$authService = new AuthService($userRepo);
++$demandeRepo = new DemandeRepository($pdo);
++$demandeService = new DemandeService($demandeRepo, $pdo);
++
++echo "=== 1. Tests d'authentification ===\n";
++$etu = $authService->authentifier('danik@univ.test', 'Demo1234!');
++verifier('Connexion étudiant valide (mot de passe haché)', $etu !== null && $etu['role'] === 'ETUDIANT' && !isset($etu['mot_de_passe_hash']));
++verifier('Connexion refusée si mot de passe faux', $authService->authentifier('danik@univ.test', 'MauvaisMdp') === null);
++verifier('Connexion refusée si email inconnu', $authService->authentifier('inconnu@univ.test', 'Demo1234!') === null);
++
++$resp = $authService->authentifier('resp@univ.test', 'Demo1234!');
++verifier('Connexion responsable valide', $resp !== null && $resp['role'] === 'RESPONSABLE');
++
++echo "\n=== 2. Tests des transitions autorisées ===\n";
++verifier('BROUILLON -> SOUMISE autorisé', DemandeService::peutPasser('BROUILLON', 'SOUMISE') === true);
++verifier('SOUMISE -> VALIDEE autorisé', DemandeService::peutPasser('SOUMISE', 'VALIDEE') === true);
++verifier('SOUMISE -> REFUSEE autorisé', DemandeService::peutPasser('SOUMISE', 'REFUSEE') === true);
++verifier('REFUSEE -> BROUILLON autorisé', DemandeService::peutPasser('REFUSEE', 'BROUILLON') === true);
++verifier('BROUILLON -> VALIDEE interdit', DemandeService::peutPasser('BROUILLON', 'VALIDEE') === false);
++verifier('VALIDEE -> REFUSEE interdit', DemandeService::peutPasser('VALIDEE', 'REFUSEE') === false);
++
++echo "\n=== 3. Tests des scénarios métier et codes HTTP ===\n";
++$cree = $demandeService->creerDemande($etu, 1);
++verifier('201 : Création demande -> statut BROUILLON', $cree['id'] === 1 && $cree['statut'] === 'BROUILLON');
++
++try {
++    $demandeService->creerDemande($etu, 999);
++    verifier('400 : Entreprise inexistante rejetée', false);
++} catch (RuntimeException $e) {
++    verifier('400 : Entreprise inexistante rejetée (code 400)', $e->getCode() === 400);
++}
++
++$soumise = $demandeService->changerStatut(1, 'SOUMISE', null, $etu);
++verifier('200 : Étudiant soumet sa demande (BROUILLON -> SOUMISE)', $soumise['statut'] === 'SOUMISE');
++
++try {
++    $demandeService->changerStatut(1, 'VALIDEE', null, $etu);
++    verifier('403 : Étudiant ne peut pas valider', false);
++} catch (RuntimeException $e) {
++    verifier('403 : Étudiant bloqué sur validation (code 403)', $e->getCode() === 403);
++}
++
++try {
++    $demandeService->changerStatut(1, 'REFUSEE', '', $resp);
++    verifier('400 : Refus sans motif rejeté', false);
++} catch (RuntimeException $e) {
++    verifier('400 : Refus sans motif rejeté (code 400)', $e->getCode() === 400);
++}
++
++try {
++    $demandeService->changerStatut(999, 'VALIDEE', null, $resp);
++    verifier('404 : Demande inexistante rejetée', false);
++} catch (RuntimeException $e) {
++    verifier('404 : Demande 999 introuvable (code 404)', $e->getCode() === 404);
++}
++
++$validee = $demandeService->changerStatut(1, 'VALIDEE', null, $resp);
++$nbHist = (int) $pdo->query("SELECT COUNT(*) FROM historique WHERE demande_id = 1")->fetchColumn();
++verifier('200 : Responsable valide la demande (SOUMISE -> VALIDEE)', $validee['statut'] === 'VALIDEE');
++verifier('Transaction : 3 lignes enregistrées dans historique (BROUILLON, SOUMISE, VALIDEE)', $nbHist === 3);
++
++try {
++    $demandeService->changerStatut(1, 'VALIDEE', null, $resp);
++    verifier('409 : Validation répétée rejetée', false);
++} catch (RuntimeException $e) {
++    verifier('409 : Validation répétée bloquée (code 409)', $e->getCode() === 409);
++}
++
++echo "\n=== 4. Test de rollback transactionnel en cas d'erreur SQL ===\n";
++$pdo->exec("INSERT INTO demande_stage (id, etudiant_id, entreprise_id, statut) VALUES (2, 1, 1, 'SOUMISE')");
++$pdo->exec("DROP TABLE historique");
++$prevLog = ini_set('error_log', '/dev/null');
++try {
++    $demandeService->changerStatut(2, 'VALIDEE', null, $resp);
++    verifier('Rollback : exception levée sur échec historique', false);
++} catch (RuntimeException $e) {
++    $statutApresRollback = $pdo->query("SELECT statut FROM demande_stage WHERE id = 2")->fetchColumn();
++    verifier('Rollback : code 500 et statut demande_stage inchangé (SOUMISE)', $e->getCode() === 500 && $statutApresRollback === 'SOUMISE');
++}
++ini_set('error_log', $prevLog === false ? '' : $prevLog);
++
++echo "\nRésultat global : " . ($echecs === 0 ? "TOUS LES TESTS SONT PASSÉS" : "$echecs échec(s)") . "\n";
++exit($echecs === 0 ? 0 : 1);
+diff -ruN -x .env -x tp8-tests-securite -x correctifs.patch a/tests/securite_http.php b/tests/securite_http.php
+--- a/tests/securite_http.php	1970-01-01 01:00:00.000000000 +0100
++++ b/tests/securite_http.php	2026-11-19 20:19:01.786428589 +0100
+@@ -0,0 +1,311 @@
++<?php
++declare(strict_types=1);
++
++/**
++ * TP8 : banc de test HTTP (matrice de tests, cas limites, autorisation, injection, hachage, CSRF).
++ *
++ * Prérequis : MySQL/MariaDB démarré, migrations 001 et 002 fraîchement importées, serveur lancé :
++ *     php -S localhost:8000 -t public public/index.php
++ * Lancement :
++ *     php tests/securite_http.php http://localhost:8000
++ * Option : un 2e serveur démarré avec un mauvais mot de passe SQL (test « base injoignable ») :
++ *     DB_PASS=mauvais php -S localhost:8001 -t public public/index.php
++ *     php tests/securite_http.php http://localhost:8000 http://localhost:8001
++ * Conservez la sortie comme preuve :  php tests/securite_http.php http://localhost:8000 > preuves.txt
++ *
++ * Le script modifie les données : réimportez 001_schema.sql et 002_seed.sql avant chaque exécution.
++ */
++
++require __DIR__ . '/../src/autoload.php';
++
++use App\Database;
++
++$base = rtrim($argv[1] ?? 'http://localhost:8000', '/');
++$baseCassee = isset($argv[2]) ? rtrim($argv[2], '/') : null;
++$mdp = 'Demo1234!';
++
++$comptes = [
++    'arafat' => 'arafat.alidou@univ.test',      // étudiant 1 (dossiers 1 et 4)
++    'danik'  => 'danik.ahouantcheme@univ.test', // étudiant 2 (dossier 2)
++    'ozias'  => 'ozias.dovonou@univ.test',      // étudiant 3 (dossier 3)
++    'resp'   => 'resp.pedago@univ.test',        // responsable
++    'secr'   => 'secretariat@univ.test',        // secrétariat
++    'lea'    => 'lea.hounkpati@univ.test',      // encadreur 1 (dossier 3)
++    'paul'   => 'paul.sossou@univ.test',        // encadreur 2 (aucun dossier)
++];
++
++$config = require __DIR__ . '/../config/config.php';
++try {
++    $pdo = Database::connecter($config['db']);
++} catch (Throwable $e) {
++    fwrite(STDERR, "Connexion à la base impossible : " . $e->getMessage() . "\n");
++    exit(2);
++}
++
++/** Première colonne de la première ligne (vérifications en base). */
++function val(string $sql): string
++{
++    global $pdo;
++    $v = $pdo->query($sql)->fetchColumn();
++    return $v === false || $v === null ? '' : (string) $v;
++}
++
++/** Un « navigateur » : son propre cookie de session. */
++final class Client
++{
++    public ?string $sid = null;
++    /** @var string[] */
++    public array $cookies = [];
++
++    public function __construct(private string $base) {}
++
++    /** @return array{0:int,1:mixed,2:string} code HTTP, JSON décodé, texte brut */
++    public function appel(string $methode, string $chemin, ?array $corps = null, ?string $brut = null, array $entetes = []): array
++    {
++        $h = ['Accept: application/json'];
++        $contenu = '';
++        if ($corps !== null) {
++            $contenu = json_encode($corps);
++            $h[] = 'Content-Type: application/json';
++        }
++        if ($brut !== null) {
++            $contenu = $brut;
++        }
++        if ($this->sid !== null) {
++            $h[] = 'Cookie: PHPSESSID=' . $this->sid;
++        }
++        foreach ($entetes as $nom => $valeur) {
++            $h[] = "$nom: $valeur";
++        }
++        $ctx = stream_context_create(['http' => [
++            'method' => $methode, 'header' => implode("\r\n", $h), 'content' => $contenu,
++            'ignore_errors' => true, 'timeout' => 15, 'follow_location' => 0,
++        ]]);
++        $texte = @file_get_contents($this->base . $chemin, false, $ctx);
++        $entetesReponse = $http_response_header ?? [];
++        $statut = 0;
++        $this->cookies = [];
++        foreach ($entetesReponse as $ligne) {
++            if (preg_match('#^HTTP/\S+\s+(\d{3})#', $ligne, $m)) {
++                $statut = (int) $m[1];
++            } elseif (stripos($ligne, 'Set-Cookie:') === 0) {
++                $cookie = trim(substr($ligne, 11));
++                $this->cookies[] = $cookie;
++                if (str_starts_with($cookie, 'PHPSESSID=')) {
++                    $this->sid = explode(';', substr($cookie, 10), 2)[0];
++                }
++            }
++        }
++        $json = json_decode((string) $texte, true);
++        return [$statut, is_array($json) ? $json : null, (string) $texte];
++    }
++
++    public function connexion(string $email, string $motDePasse): array
++    {
++        return $this->appel('POST', '/api/connexion', ['email' => $email, 'motDePasse' => $motDePasse]);
++    }
++}
++
++$bilanOk = 0;
++$bilanEcarts = 0;
++
++/**
++ * @param int|int[] $attendu
++ * @param callable():array $appel   renvoie [statut, json, texte]
++ * @param null|callable(int,mixed,string):array $verif   renvoie [bool, note]
++ */
++function test(string $id, string $titre, int|array $attendu, callable $appel, ?callable $verif = null): void
++{
++    global $bilanOk, $bilanEcarts;
++    $attendus = is_array($attendu) ? $attendu : [$attendu];
++    try {
++        [$statut, $json, $texte] = $appel();
++    } catch (Throwable $e) {
++        [$statut, $json, $texte] = [0, null, 'EXCEPTION ' . $e->getMessage()];
++    }
++    $note = '';
++    $okVerif = true;
++    if ($verif !== null) {
++        [$okVerif, $note] = $verif($statut, $json, $texte);
++    }
++    $ok = in_array($statut, $attendus, true) && $okVerif;
++    $ok ? $bilanOk++ : $bilanEcarts++;
++    printf("[%s] %-4s %s  -> attendu %s, obtenu %d%s\n", $ok ? 'OK   ' : 'ÉCART', $id, $titre,
++        implode('/', $attendus), $statut, $note !== '' ? "  ($note)" : '');
++}
++
++function ids(mixed $json): ?array
++{
++    if (!is_array($json)) {
++        return null;
++    }
++    $ids = array_map(static fn($d) => $d['id'] ?? null, $json);
++    sort($ids);
++    return $ids;
++}
++
++// --- Garde-fou : le jeu d'essai doit être intact -------------------------------------------------
++$etatInitial = val("SELECT GROUP_CONCAT(statut ORDER BY id) FROM demande_stage")
++    . '|' . val('SELECT COUNT(*) FROM soutenance') . '|' . val('SELECT COUNT(*) FROM historique');
++if ($etatInitial !== 'BROUILLON,SOUMISE,VALIDEE,REFUSEE|1|5') {
++    fwrite(STDERR, "Jeu d'essai modifié ($etatInitial). Réimportez migrations/001_schema.sql puis 002_seed.sql, puis relancez.\n");
++    exit(2);
++}
++
++$cl = [];
++foreach (array_keys($comptes) as $k) {
++    $cl[$k] = new Client($base);
++}
++$anonyme = new Client($base);
++$conn = static fn(string $k): array => $cl[$k]->connexion($comptes[$k], $mdp);
++
++echo "== A. Authentification et session\n";
++test('T01', 'Connexion valide (responsable)', 200, fn() => $conn('resp'),
++    fn($s, $j, $t) => [!str_contains($t, 'mot_de_passe_hash'), "le hash n'est pas renvoyé au client"]);
++test('T02', 'Mauvais mot de passe', 401, fn() => (new Client($base))->connexion($comptes['arafat'], 'faux'));
++test('T03', 'Compte inconnu : même message que T02', 401, fn() => (new Client($base))->connexion('inconnu@univ.test', 'faux'),
++    fn($s, $j, $t) => [($j['message'] ?? '') === 'Identifiants invalides.', 'message identique à T02']);
++test('T04', 'Liste sans session', 401, fn() => $anonyme->appel('GET', '/api/demandes'));
++foreach (['arafat', 'danik', 'ozias', 'lea', 'paul', 'secr'] as $k) {
++    $conn($k);
++}
++
++$cSession = new Client($base);
++$cSession->appel('GET', '/api/moi');
++$sidAvant = $cSession->sid;
++test('T05', 'Identifiant de session régénéré après connexion', 200, fn() => $cSession->connexion($comptes['resp'], $mdp),
++    fn($s, $j, $t) => [$sidAvant !== null && $cSession->sid !== $sidAvant, 'avant=' . substr((string) $sidAvant, 0, 8) . '… après=' . substr((string) $cSession->sid, 0, 8) . '…']);
++$cCookie = new Client($base);
++test('T06', 'Cookie de session : HttpOnly et SameSite', 200, fn() => $cCookie->connexion($comptes['resp'], $mdp),
++    function () use ($cCookie) {
++        $attrs = implode(' | ', $cCookie->cookies);
++        return [stripos($attrs, 'httponly') !== false && stripos($attrs, 'samesite=lax') !== false, $attrs];
++    });
++
++echo "== B. Autorisation (isolation entre étudiants)\n";
++test('T07', "Étudiant B (Danik) lit le dossier de l'étudiant A (Arafat) : GET /api/demandes/1", 403,
++    fn() => $cl['danik']->appel('GET', '/api/demandes/1'));
++test('T08', 'Le propriétaire lit son propre dossier : GET /api/demandes/1', 200,
++    fn() => $cl['arafat']->appel('GET', '/api/demandes/1'));
++test('T09', "La liste d'un étudiant ne contient que ses dossiers", 200,
++    fn() => $cl['danik']->appel('GET', '/api/demandes'),
++    fn($s, $j, $t) => [ids($j) === [2], 'ids reçus = ' . json_encode(ids($j)) . ' (attendu [2])']);
++test('T10', "L'étudiant B modifie le dossier de l'étudiant A (soumission)", 403,
++    fn() => $cl['danik']->appel('PATCH', '/api/demandes/1/statut', ['statut' => 'SOUMISE']));
++test('T11', 'Un étudiant tente de valider (rôle insuffisant)', 403,
++    fn() => $cl['danik']->appel('PATCH', '/api/demandes/2/statut', ['statut' => 'VALIDEE']));
++
++echo "== C. Injection SQL : « 1 OR 1=1 »\n";
++test('T12', "« 1 OR 1=1 » comme identifiant dans l'URL (GET)", [400, 404],
++    fn() => $cl['danik']->appel('GET', '/api/demandes/1%20OR%201=1'),
++    fn($s, $j, $t) => [!str_contains($t, 'etudiant_id'), 'aucune donnée de dossier renvoyée']);
++test('T13', "« 1 OR 1=1 » comme identifiant dans l'URL (PATCH)", [400, 404],
++    fn() => $cl['resp']->appel('PATCH', '/api/demandes/1%20OR%201=1/statut', ['statut' => 'SOUMISE']));
++test('T14', "Injection SQL dans l'e-mail de connexion", 401,
++    fn() => (new Client($base))->connexion("' OR '1'='1' -- ", 'x'));
++test('T15', "« 1 OR 1=1 » comme entrepriseId (corps JSON)", 400,
++    fn() => $cl['arafat']->appel('POST', '/api/demandes', ['entrepriseId' => '1 OR 1=1']));
++$pdo->exec('UPDATE demande_stage SET encadreur_id = 1 WHERE id = 3');
++test('T16', "« 2 OR 1=1 » comme encadreurId (corps JSON)", 400,
++    fn() => $cl['resp']->appel('PATCH', '/api/demandes/3/encadreur', ['encadreurId' => '2 OR 1=1']),
++    fn($s, $j, $t) => [val('SELECT encadreur_id FROM demande_stage WHERE id=3') === '1',
++        'encadreur_id en base après appel = ' . val('SELECT encadreur_id FROM demande_stage WHERE id=3') . ' (attendu 1 : inchangé)']);
++$pdo->exec('UPDATE demande_stage SET encadreur_id = 1 WHERE id = 3');
++
++echo "== D. Quatre cas limites imposés\n";
++test('T17', 'Demande inexistante', 404, fn() => $cl['resp']->appel('PATCH', '/api/demandes/999/statut', ['statut' => 'VALIDEE']));
++test('T18', 'Refus sans motif (champ absent)', 400, fn() => $cl['resp']->appel('PATCH', '/api/demandes/2/statut', ['statut' => 'REFUSEE']));
++test('T19', 'Refus avec motif vide (espaces)', 400, fn() => $cl['resp']->appel('PATCH', '/api/demandes/2/statut', ['statut' => 'REFUSEE', 'motif' => '   ']));
++test('T20', 'Validation (première fois) SOUMISE -> VALIDEE', 200, fn() => $cl['resp']->appel('PATCH', '/api/demandes/2/statut', ['statut' => 'VALIDEE']));
++$nbHist = val('SELECT COUNT(*) FROM historique WHERE demande_id=2');
++test('T21', 'Validation répétée', 409, fn() => $cl['resp']->appel('PATCH', '/api/demandes/2/statut', ['statut' => 'VALIDEE']),
++    fn($s, $j, $t) => [val('SELECT statut FROM demande_stage WHERE id=2') === 'VALIDEE' && val('SELECT COUNT(*) FROM historique WHERE demande_id=2') === $nbHist,
++        "statut resté VALIDEE, historique inchangé ($nbHist lignes)"]);
++test('T22', 'Date de soutenance invalide (31/02/2026 25:99)', 400,
++    fn() => $cl['resp']->appel('POST', '/api/demandes/3/soutenance', ['dateHeure' => '31/02/2026 25:99', 'salle' => 'B12']));
++test('T23', 'Date inexistante au bon format (2026-02-31 10:00)', 400,
++    fn() => $cl['resp']->appel('POST', '/api/demandes/3/soutenance', ['dateHeure' => '2026-02-31 10:00', 'salle' => 'B12']));
++test('T24', 'Soutenance valide', 200,
++    fn() => $cl['resp']->appel('POST', '/api/demandes/3/soutenance', ['dateHeure' => '2026-12-15 09:00', 'salle' => 'Amphi A']));
++test('T25', 'Salle trop longue (51 caractères)', 400,
++    fn() => $cl['resp']->appel('POST', '/api/demandes/3/soutenance', ['dateHeure' => '2026-12-15 09:00', 'salle' => str_repeat('X', 51)]));
++
++echo "== E. Encadrement et notation\n";
++test('T26', "Un étudiant tente d'affecter un encadreur", 403, fn() => $cl['arafat']->appel('PATCH', '/api/demandes/3/encadreur', ['encadreurId' => 2]));
++test('T27', 'Affectation sur un dossier non validé (BROUILLON)', 400, fn() => $cl['resp']->appel('PATCH', '/api/demandes/1/encadreur', ['encadreurId' => 1]));
++test('T28', 'Encadreur inexistant', 400, fn() => $cl['resp']->appel('PATCH', '/api/demandes/3/encadreur', ['encadreurId' => 99]));
++test('T29', 'Note hors bornes (25)', 400, fn() => $cl['lea']->appel('PATCH', '/api/demandes/3/note', ['note' => 25]));
++test('T30', 'Note non numérique', 400, fn() => $cl['lea']->appel('PATCH', '/api/demandes/3/note', ['note' => 'abc']));
++test('T31', 'Encadreur non affecté au dossier (Paul)', 403, fn() => $cl['paul']->appel('PATCH', '/api/demandes/3/note', ['note' => 12]));
++test('T32', 'Étudiant tente de se noter', 403, fn() => $cl['ozias']->appel('PATCH', '/api/demandes/3/note', ['note' => 20]));
++test('T33', 'Note valide par l\'encadreur affecté', 200, fn() => $cl['lea']->appel('PATCH', '/api/demandes/3/note', ['note' => 14.5]),
++    fn($s, $j, $t) => [in_array(val('SELECT note FROM soutenance WHERE demande_id=3'), ['14.50', '14.5'], true), 'note en base = ' . val('SELECT note FROM soutenance WHERE demande_id=3')]);
++test('T34', 'Noter un dossier validé SANS soutenance programmée (dossier 2)', [404, 409], fn() => $cl['resp']->appel('PATCH', '/api/demandes/2/note', ['note' => 10]));
++
++echo "== F. Robustesse des entrées\n";
++test('T35', 'Corps JSON invalide', 400, fn() => $cl['resp']->appel('PATCH', '/api/demandes/2/statut', null, '{pas du json', ['Content-Type' => 'application/json']));
++test('T36', 'Statut inconnu (PERDU)', 400, fn() => $cl['resp']->appel('PATCH', '/api/demandes/2/statut', ['statut' => 'PERDU']));
++test('T37', 'Route inconnue', 404, fn() => $anonyme->appel('GET', '/api/n-importe-quoi'));
++
++echo "== G. CSRF\n";
++$noteEstQuatorze = static fn(): bool => in_array(val('SELECT note FROM soutenance WHERE demande_id=3'), ['14.50', '14.5'], true);
++test('T38', 'Requête modifiante envoyée depuis un autre site (Origin: http://evil.test)', 403,
++    fn() => $cl['lea']->appel('PATCH', '/api/demandes/3/note', ['note' => 1], null, ['Origin' => 'http://evil.test']),
++    fn($s, $j, $t) => [$noteEstQuatorze(), 'note en base = ' . val('SELECT note FROM soutenance WHERE demande_id=3') . ' (14.50 attendu : non modifiée)']);
++test('T39', 'Corps JSON posté en text/plain (formulaire forgé) avec Origin étranger', 403,
++    fn() => $cl['lea']->appel('PATCH', '/api/demandes/3/note', null, '{"note": 2}', ['Content-Type' => 'text/plain', 'Origin' => 'http://evil.test']));
++$origineSite = (preg_match('#^(https?://[^/]+)#', $base, $m) ? $m[1] : $base);
++test('T40', 'Requête légitime depuis la même origine (non-régression)', 200,
++    fn() => $cl['lea']->appel('PATCH', '/api/demandes/3/note', ['note' => 15], null, ['Origin' => $origineSite]));
++test('T41', 'Client sans en-tête Origin (Postman, curl)', 200, fn() => $cl['lea']->appel('PATCH', '/api/demandes/3/note', ['note' => 15]));
++
++echo "== H. Déconnexion et erreurs serveur\n";
++test('T42', 'Déconnexion puis accès refusé', 401, function () use ($cl) {
++    $cl['secr']->appel('POST', '/api/deconnexion', []);
++    return $cl['secr']->appel('GET', '/api/moi');
++});
++if ($baseCassee !== null) {
++    test('T43', 'Base injoignable : message neutre, aucun détail SQL', 500,
++        fn() => (new Client($baseCassee))->connexion($comptes['resp'], $mdp),
++        fn($s, $j, $t) => [!str_contains($t, 'SQLSTATE') && !str_contains($t, 'PDO') && !str_contains($t, 'Access denied'), 'aucun SQLSTATE / PDO dans la réponse']);
++}
++
++echo "== I. Mots de passe hachés en base\n";
++$hashes = $pdo->query('SELECT email, mot_de_passe_hash FROM utilisateur ORDER BY id')->fetchAll(PDO::FETCH_NUM);
++$nbBcrypt = count(array_filter($hashes, static fn($h) => str_starts_with($h[1], '$2y$') && strlen($h[1]) === 60));
++$aucunClair = count(array_filter($hashes, static fn($h) => $h[1] === $mdp)) === 0;
++$ok44 = $nbBcrypt === count($hashes) && $aucunClair;
++$ok44 ? $bilanOk++ : $bilanEcarts++;
++printf("[%s] T44  hash bcrypt : %d/%d, aucun en clair : %s\n", $ok44 ? 'OK   ' : 'ÉCART', $nbBcrypt, count($hashes), $aucunClair ? 'oui' : 'NON');
++$distincts = count(array_unique(array_column($hashes, 1)));
++$ok45 = $distincts === count($hashes);
++$ok45 ? $bilanOk++ : $bilanEcarts++;
++printf("[%s] T45  hash distincts : %d/%d\n", $ok45 ? 'OK   ' : 'ÉCART', $distincts, count($hashes));
++
++echo "== J. Autres contrôles relevés pendant la revue\n";
++test('T46', 'Identifiant renvoyé quand on modifie une soutenance existante (dossier 2)', 200,
++    function () use ($cl) {
++        $cl['resp']->appel('POST', '/api/demandes/2/soutenance', ['dateHeure' => '2026-12-01 10:00:00', 'salle' => 'B1']);
++        return $cl['resp']->appel('POST', '/api/demandes/2/soutenance', ['dateHeure' => '2026-12-02 11:00:00', 'salle' => 'B2']);
++    },
++    fn($s, $j, $t) => [isset($j['id']) && (string) $j['id'] === val('SELECT id FROM soutenance WHERE demande_id=2'),
++        'id renvoyé = ' . ($j['id'] ?? 'aucun') . ', id en base = ' . val('SELECT id FROM soutenance WHERE demande_id=2')]);
++test('T47', '40 échecs de connexion d\'affilée, puis le bon mot de passe', [423, 429], function () use ($base, $comptes, $mdp) {
++    for ($i = 0; $i < 40; $i++) {
++        (new Client($base))->connexion($comptes['resp'], "essai$i");
++    }
++    return (new Client($base))->connexion($comptes['resp'], $mdp);
++});
++test('T48', 'Compte désactivé pendant une session ouverte (actif = 0)', 401, function () use ($base, $comptes, $mdp, $pdo) {
++    $c = new Client($base);
++    $c->connexion($comptes['paul'], $mdp);
++    $pdo->exec("UPDATE utilisateur SET actif = 0 WHERE email = " . $pdo->quote($comptes['paul']));
++    try {
++        return $c->appel('GET', '/api/demandes');
++    } finally {
++        $pdo->exec("UPDATE utilisateur SET actif = 1 WHERE email = " . $pdo->quote($comptes['paul']));
++    }
++});
++
++printf("\nBILAN : %d OK, %d écart(s), %d tests\n", $bilanOk, $bilanEcarts, $bilanOk + $bilanEcarts);
++exit($bilanEcarts === 0 ? 0 : 1);
