@@ -1,0 +1,59 @@
+:root {
+  --bleu: #1b365d;
+  --bleu-clair: #2b547e;
+  --fond: #f4f6f9;
+  --carte: #ffffff;
+  --bordure: #cbd5e1;
+  --texte: #1e293b;
+  --vert: #166534;
+  --vert-fond: #dcfce7;
+  --rouge: #991b1b;
+  --rouge-fond: #fee2e2;
+  --ambre: #92400e;
+  --ambre-fond: #fef3c7;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; font-family: system-ui, sans-serif;
+  background: var(--fond); color: var(--texte); line-height: 1.5;
+}
+.conteneur { max-width: 950px; margin: 0 auto; padding: 0 1rem; }
+.entete { background: var(--bleu); color: #fff; padding: 1.25rem 0; margin-bottom: 1.5rem; }
+.entete h1 { margin: 0; font-size: 1.4rem; }
+.sous-titre { margin: 0.2rem 0 0; font-size: 0.9rem; opacity: 0.9; }
+.entete-contenu { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.barre-utilisateur { display: flex; align-items: center; gap: 0.75rem; }
+.badge-user { background: rgba(255,255,255,0.15); padding: 0.35rem 0.75rem; border-radius: 6px; font-size: 0.9rem; }
+.carte { background: var(--carte); border: 1px solid var(--bordure); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.25rem; }
+.carte h2, .carte h3 { margin-top: 0; color: var(--bleu); }
+.entete-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.entete-section h2 { margin: 0; }
+.champ { margin-bottom: 1rem; }
+.champ label { display: block; font-weight: 600; margin-bottom: 0.35rem; }
+.champ-inline { display: flex; align-items: center; gap: 0.5rem; }
+.champ-inline label { margin-bottom: 0; font-weight: normal; }
+input[type="email"], input[type="password"], input[type="text"], input[type="datetime-local"], select, textarea {
+  width: 100%; padding: 0.6rem 0.75rem; border: 1px solid var(--bordure); border-radius: 6px; font-size: 1rem; font-family: inherit;
+}
+input:focus, select:focus, textarea:focus { outline: 3px solid #93c5fd; outline-offset: 1px; }
+.erreur-champ { color: var(--rouge); font-size: 0.875rem; margin: 0.3rem 0 0; min-height: 1.2em; }
+.alerte { padding: 0.85rem 1rem; border-radius: 6px; margin-bottom: 1rem; font-weight: 500; border: 1px solid transparent; }
+.alerte-erreur { background: var(--rouge-fond); color: var(--rouge); border-color: #fca5a5; }
+.alerte-succes { background: var(--vert-fond); color: var(--vert); border-color: #86efac; }
+.btn { display: inline-block; padding: 0.55rem 1rem; border-radius: 6px; border: 1px solid transparent; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
+.btn-primaire { background: var(--bleu); color: #fff; }
+.btn-primaire:hover { background: var(--bleu-clair); }
+.btn-secondaire { background: #e2e8f0; color: var(--texte); }
+.btn-succes { background: var(--vert); color: #fff; }
+.btn-danger { background: var(--rouge); color: #fff; }
+.liste-dossiers { display: flex; flex-direction: column; gap: 0.75rem; }
+.dossier-item { border: 1px solid var(--bordure); border-radius: 6px; padding: 1rem; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
+.dossier-infos p { margin: 0.25rem 0; }
+.statut-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.8rem; font-weight: 700; }
+.statut-BROUILLON { background: #e2e8f0; color: #334155; }
+.statut-SOUMISE   { background: var(--ambre-fond); color: var(--ambre); }
+.statut-VALIDEE   { background: var(--vert-fond); color: var(--vert); }
+.statut-REFUSEE   { background: var(--rouge-fond); color: var(--rouge); }
+.actions-ligne { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+.panneau-modale { border-left: 4px solid var(--bleu); }
+.comptes-demo { margin-top: 1.25rem; padding-top: 0.75rem; border-top: 1px dashed var(--bordure); font-size: 0.9rem; color: #475569; }

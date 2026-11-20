@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gestion des stages et soutenances — TP8</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="entete">
+    <div class="conteneur entete-contenu">
+      <div>
+        <h1>Gestion des stages et soutenances</h1>
+        <p class="sous-titre">L3 SIL · TP8 Affectation d'encadreurs &amp; programmation des soutenances</p>
+      </div>
+      <div id="barre-utilisateur" class="barre-utilisateur" hidden>
+        <span id="info-utilisateur" class="badge-user"></span>
+        <button type="button" id="btn-deconnexion" class="btn btn-secondaire">Déconnexion</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="conteneur">
+    <div id="alerte-globale" class="alerte" role="alert" aria-live="polite" hidden></div>
+
+    <!-- CONNEXION -->
+    <section id="vue-connexion" class="carte">
+      <h2>Connexion à la plateforme</h2>
+      <p class="aide">Connectez-vous avec votre compte universitaire (Étudiant, Responsable, Encadreur ou Secrétariat).</p>
+
+      <form id="form-connexion" novalidate>
+        <div class="champ">
+          <label for="email">Email universitaire</label>
+          <input type="email" id="email" name="email" required placeholder="ex. danik.ahouantcheme@univ.test">
+          <p id="erreur-email" class="erreur-champ" role="alert"></p>
+        </div>
+        <div class="champ">
+          <label for="motDePasse">Mot de passe</label>
+          <input type="password" id="motDePasse" name="motDePasse" required placeholder="••••••••">
+          <p id="erreur-motDePasse" class="erreur-champ" role="alert"></p>
+        </div>
+        <button type="submit" class="btn btn-primaire">Se connecter</button>
+      </form>
+
+      <details class="comptes-demo">
+        <summary>Comptes de test (Mot de passe : <code>Demo1234!</code>)</summary>
+        <ul>
+          <li><strong>Étudiant :</strong> <code>danik.ahouantcheme@univ.test</code></li>
+          <li><strong>Responsable :</strong> <code>resp.pedago@univ.test</code></li>
+          <li><strong>Encadreur :</strong> <code>lea.hounkpati@univ.test</code></li>
+          <li><strong>Secrétariat :</strong> <code>secretariat@univ.test</code></li>
+        </ul>
+      </details>
+    </section>
+
+    <!-- ESPACE ÉTUDIANT -->
+    <section id="vue-etudiant" hidden>
+      <div class="carte">
+        <h2>Déposer une nouvelle demande de stage</h2>
+        <form id="form-demande" novalidate>
+          <div class="champ">
+            <label for="entrepriseId">Entreprise d'accueil</label>
+            <select id="entrepriseId" name="entrepriseId" required>
+              <option value="">-- Choisir une entreprise --</option>
+            </select>
+            <p id="erreur-entrepriseId" class="erreur-champ" role="alert"></p>
+          </div>
+          <div class="champ champ-inline">
+            <input type="checkbox" id="soumettre-directement" name="soumettre" checked>
+            <label for="soumettre-directement">Soumettre immédiatement au responsable</label>
+          </div>
+          <button type="submit" class="btn btn-primaire">Créer la demande</button>
+        </form>
+      </div>
+
+      <div class="carte">
+        <div class="entete-section">
+          <h2>Mes stages et soutenances</h2>
+          <button type="button" id="btn-rafraichir-etudiant" class="btn btn-secondaire">Actualiser</button>
+        </div>
+        <div id="liste-demandes-etudiant" class="liste-dossiers"></div>
+      </div>
+    </section>
+
+    <!-- ESPACE RESPONSABLE / SECRÉTARIAT -->
+    <section id="vue-responsable" hidden>
+      <div class="carte">
+        <div class="entete-section">
+          <h2>Gestion globale des dossiers de stage</h2>
+          <button type="button" id="btn-rafraichir-responsable" class="btn btn-secondaire">Actualiser</button>
+        </div>
+        <div id="liste-demandes-responsable" class="liste-dossiers"></div>
+      </div>
+    </section>
+
+    <!-- ESPACE ENCADREUR -->
+    <section id="vue-encadreur" hidden>
+      <div class="carte">
+        <div class="entete-section">
+          <h2>Mes étudiants encadrés &amp; notation des soutenances</h2>
+          <button type="button" id="btn-rafraichir-encadreur" class="btn btn-secondaire">Actualiser</button>
+        </div>
+        <div id="liste-demandes-encadreur" class="liste-dossiers"></div>
+      </div>
+    </section>
+
+    <!-- PANNEAU REFUS -->
+    <div id="panneau-refus" class="carte panneau-modale" hidden>
+      <h3 id="titre-panneau-refus">Refuser la demande</h3>
+      <form id="form-refus" novalidate>
+        <input type="hidden" id="refus-demande-id">
+        <div class="champ">
+          <label for="motif">Motif du refus (obligatoire)</label>
+          <textarea id="motif" name="motif" rows="3" required placeholder="Précisez les corrections..."></textarea>
+          <p id="erreur-motif" class="erreur-champ" role="alert"></p>
+        </div>
+        <div class="actions-ligne">
+          <button type="submit" class="btn btn-danger">Confirmer le refus</button>
+          <button type="button" id="btn-annuler-refus" class="btn btn-secondaire">Annuler</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- PANNEAU SOUTENANCE -->
+    <div id="panneau-soutenance" class="carte panneau-modale" hidden>
+      <h3 id="titre-panneau-soutenance">Programmer la soutenance</h3>
+      <form id="form-soutenance" novalidate>
+        <input type="hidden" id="soutenance-demande-id">
+        <div class="champ">
+          <label for="date-soutenance">Date et heure</label>
+          <input type="datetime-local" id="date-soutenance" required>
+        </div>
+        <div class="champ">
+          <label for="salle-soutenance">Salle</label>
+          <input type="text" id="salle-soutenance" required placeholder="ex. Amphi B, Labo 3">
+        </div>
+        <div class="actions-ligne">
+          <button type="submit" class="btn btn-primaire">Enregistrer la soutenance</button>
+          <button type="button" id="btn-annuler-soutenance" class="btn btn-secondaire">Annuler</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
